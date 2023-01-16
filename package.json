@@ -1,0 +1,23 @@
+{
+  "name": "blue-account",
+  "version": "1.0.0",
+  "description": "Simple application to auto-download many files and compress it.",
+  "main": "src/index.js",
+  "scripts": {
+    "build": "tsc -m commonjs -t es2016 --esModuleInterop src/*.ts",
+    "blue": "node -r dotenv/config ./src/blue"
+  },
+  "keywords": [],
+  "author": "Vinicius Anic4cio",
+  "license": "ISC",
+  "dependencies": {
+    "@types/archiver": "^5.3.1",
+    "@types/node": "^18.11.18",
+    "archiver": "^5.3.1",
+    "dotenv": "^16.0.3",
+    "puppeteer": "^19.5.2"
+  },
+  "devDependencies": {
+    "typescript": "^4.9.4"
+  }
+}
