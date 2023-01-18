@@ -13,7 +13,8 @@ const delay = async (milliseconds: number) => {
 const downloadPath = './downloads'
 
 const setNewBrowser = async () => {
-  const browser = await puppeteer.launch({ headless: false })
+  const browser = await puppeteer.launch({ headless: false }) // You can see the browser
+  // const browser = await puppeteer.launch({ headless: true }) // You can't see the browser
   const page = await browser.newPage()
   await installMouseHelper(page)
   await setDownloadDirectory(page)
