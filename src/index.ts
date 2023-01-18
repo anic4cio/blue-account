@@ -1,7 +1,8 @@
-import puppeteer, { Browser, FileChooser, Page } from 'puppeteer'
+import puppeteer, { Browser, Page } from 'puppeteer'
 import envs from './envs.js'
 import fs from 'fs'
 import dirCompresser from './dirCompresser.js'
+const { installMouseHelper } = require('./install-mouse-helper')
 
 const delay = async (milliseconds: number) => {
   return new Promise<void>(resolve => {
@@ -12,8 +13,9 @@ const delay = async (milliseconds: number) => {
 const downloadPath = './downloads'
 
 const setNewBrowser = async () => {
-  const browser = await puppeteer.launch()
+  const browser = await puppeteer.launch({ headless: false })
   const page = await browser.newPage()
+  await installMouseHelper(page)
   await setDownloadDirectory(page)
   await page.setViewport({ width: 900, height: 900 })
   return { browser, page }
@@ -75,7 +77,7 @@ const downloadFiles = async (page: Page) => {
   let moveDown = 215
   let downloadClick = 275
   await page.waitForSelector('[class="ds-data-grid-actions__dropdown-container"]')
-  await page.mouse.wheel({ deltaY: 600 })
+  await page.mouse.wheel({ deltaY: 1000 })
   await delay(2500)
 
   for (let i = 0; i < 10; i++) {
