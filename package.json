@@ -5,7 +5,7 @@
   "main": "src/index.js",
   "scripts": {
     "build": "tsc -m commonjs -t es2016 --esModuleInterop src/*.ts",
-    "blue": "node -r dotenv/config ./src/blue"
+    "start": "node -r dotenv/config ./src/index"
   },
   "keywords": [],
   "author": "Vinicius Anic4cio",
