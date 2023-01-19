@@ -13,8 +13,8 @@ const delay = async (milliseconds: number) => {
 const downloadPath = './downloads'
 
 const setNewBrowser = async () => {
-  const browser = await puppeteer.launch({ headless: false }) // You can see the browser
-  // const browser = await puppeteer.launch({ headless: true }) // You can't see the browser
+  // const browser = await puppeteer.launch({ headless: false }) // You can see the browser
+  const browser = await puppeteer.launch({ headless: true }) // You can't see the browser
   const page = await browser.newPage()
   await installMouseHelper(page)
   await setDownloadDirectory(page)
@@ -56,9 +56,8 @@ const iterateAtDownloadPages = async (browser: Browser, page: Page) => {
       await browser.close()
       break
     }
-    checkFiles()
   }
-  return
+  return checkFiles()
 }
 
 const getPagesNumber = async (page: Page) => {
