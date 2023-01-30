@@ -75,27 +75,15 @@ const getNumber = (value: number) => {
 }
 
 const downloadFiles = async (page: Page) => {
-  await page.waitForSelector('[class="ds-data-grid-actions__dropdown-container"]')
+  await page.waitForSelector('[class="ds-dropdown-item-label"]')
   await page.mouse.wheel({ deltaY: 1000 })
+  await page.$$eval('[class="ds-dropdown-item-label"]', options => {
+     options.forEach(option => {
+      if(option.textContent === ' Fazer download do XML ') option.click()
+    })
+  })
   await delay(2000)
-
-  let moveDown = 215
-  let downloadClick = 320
-  for (let i = 0; i < 9; i++) {
-    await page.mouse.click(800, moveDown)
-    await delay(500)
-    await page.mouse.click(800, downloadClick)
-    await delay(1000)
-    moveDown += 60
-    downloadClick += 60
-  }
-
-  await page.mouse.click(800, 755)
-  await delay(500)
-  await page.mouse.click(800, 680)
-  await delay(1000)
 }
-
 
 const checkFiles = () => {
   const path = './downloads'
