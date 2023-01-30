@@ -13,8 +13,8 @@ const delay = async (milliseconds: number) => {
 const downloadPath = './downloads'
 
 const setNewBrowser = async () => {
-  // const browser = await puppeteer.launch({ headless: false }) // You can see the browser
-  const browser = await puppeteer.launch({ headless: true }) // You can't see the browser
+  const browser = await puppeteer.launch({ headless: false }) // You can see the browser
+  // const browser = await puppeteer.launch({ headless: true }) // You can't see the browser
   const page = await browser.newPage()
   await installMouseHelper(page)
   await setDownloadDirectory(page)
@@ -40,6 +40,8 @@ const navigate = async () => {
   await page.keyboard.press('Enter')
   await page.waitForNavigation({ waitUntil: 'load' })
   await page.goto(envs.serviceUrl)
+  await page.waitForSelector('[class="ds-button ds-button-default ds-button-lg ds-button--is-square ds-date-filter__button ds-date-filter__button--prev"]')
+  await page.click('[class="ds-button ds-button-default ds-button-lg ds-button--is-square ds-date-filter__button ds-date-filter__button--prev"]')
   await page.waitForSelector('[class="ds-pagination-navigation-label"]')
   await iterateAtDownloadPages(browser, page)
   dirCompresser(downloadPath)
@@ -74,21 +76,27 @@ const getNumber = (value: number) => {
 }
 
 const downloadFiles = async (page: Page) => {
-  let moveDown = 215
-  let downloadClick = 275
   await page.waitForSelector('[class="ds-data-grid-actions__dropdown-container"]')
   await page.mouse.wheel({ deltaY: 1000 })
-  await delay(2500)
+  await delay(2000)
 
-  for (let i = 0; i < 10; i++) {
+  let moveDown = 215
+  let downloadClick = 320
+  for (let i = 0; i < 9; i++) {
     await page.mouse.click(800, moveDown)
-    await delay(1000)
-    moveDown = downloadClick
+    await delay(500)
     await page.mouse.click(800, downloadClick)
     await delay(1000)
+    moveDown += 60
     downloadClick += 60
   }
+
+  await page.mouse.click(800, 755)
+  await delay(500)
+  await page.mouse.click(800, 680)
+  await delay(1000)
 }
+
 
 const checkFiles = () => {
   const path = './downloads'
