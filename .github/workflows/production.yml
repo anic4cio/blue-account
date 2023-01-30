@@ -9,5 +9,6 @@ jobs:
       contents: 'read'
       id-token: 'write'
     steps:
+      - uses: actions/checkout@v2
       - name: Transpile files to TS
         run: npm run build
