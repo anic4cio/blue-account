@@ -1,0 +1,13 @@
+name: Production
+on:
+  push:
+    branches: [ main ]
+jobs:
+  job_id:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: 'read'
+      id-token: 'write'
+    steps:
+      - name: Transpile files to TS
+        run: npm run build
