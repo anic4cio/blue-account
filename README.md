@@ -9,12 +9,13 @@ Simple application to auto-download many files in a website and compress it.
 
 ### How does it work?
 * Inside src dir, has a file named `install-mouse-helper.js` and it's used to watch mouse pointer working when headless is false
-* The application set the download path to `./download`
-* The Archiver module will compress the download folder after all downloads was finnished
-* Finnaly the Archiver will come up with `download.zip` file
-* We can watch Puppeteer working setting `{ headless: false }` option when instancing a new browser (This option **IS NOT** recommended when application is running in production, it's only a way to develop easier)
+* The application set the download path to `./invoices`
+* The Archiver module will compress the folder after all downloads was finnished
+* Finnaly the Archiver will come up with `invoices.zip` file
+* We can watch Puppeteer working setting `{ headless: false }` option when instancing a new browser
+(This option **IS NOT** recommended when application is running in production, it's only a way to develop your code easier)
 * The application would crash at any moment, because depends on Conta Azul page updates.
-* The better way to make this reliable is getting all buttons by its selector values. But it's a challenge!
+* The better way to make this reliable is getting all buttons by its selector values. But it's a challenge! (Challenge passed!)
 
 ### How to run this?
 1. Clone this repository
