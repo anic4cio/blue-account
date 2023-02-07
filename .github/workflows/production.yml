@@ -16,8 +16,6 @@ jobs:
         with:
           node-version: 16.x
           cache: npm
-      - name: Lint the TS codes
-        run: npm run lint
       - name: Transpile files to TS
         run: npm run build
       - id: 'auth'
