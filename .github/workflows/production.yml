@@ -1,4 +1,4 @@
-name: Production
+name: blue-account-deploy
 on:
   push:
     branches: [ main ]
@@ -8,27 +8,33 @@ jobs:
     permissions:
       contents: 'read'
       id-token: 'write'
-
     steps:
       - name: Checkout
         uses: actions/checkout@v3
-      
       - name: Set Node.js 16.x
         uses: actions/setup-node@v3
         with:
           node-version: 16.x
           cache: npm
-
-      - name: Install dependencies
-        run: npm ci
-
       - name: Lint the TS codes
         run: npm run lint
-
       - name: Transpile files to TS
         run: npm run build
-
       - id: 'auth'
         uses: google-github-actions/auth@v1
         with:
-          credentials_json: ${{ secrets.GOOGLE_CLOUD_KEY}}
+          credentials_json: ${{ secrets.GOOGLE_CLOUD_KEY }}
+      - id: 'deploy'
+        uses: 'google-github-actions/deploy-cloud-functions@v1'
+        with:
+          name: 'blue-account'
+          runtime: 'nodejs16'
+          entry_point: start
+          memory_mb: '512'
+          region: us-west2
+          env_vars: CLOUD_FUNCTION_TOKEN=${{ secrets.CLOUD_FUNCTION_TOKEN }}, SLACK_TOKEN=${{ secrets.SLACK_TOKEN }}, BLUE_USER=${{ secrets.BLUE_USER }}, BLUE_PASS=${{ secrets.BLUE_PASS }}
+          project_id: cloud-test-634eb
+          service_account_email: cloud-test-634eb@appspot.gserviceaccount.com
+          timeout: '600'
+          max_instances: '1'
+          https_trigger_security_level: secure_always
