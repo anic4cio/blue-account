@@ -6,8 +6,8 @@ export default (path: string) => {
   const archive = archiver('zip', { zlib: { level: 9 } })
 
   output.on('close', () => {
-    console.log(archive.pointer() + ' total bytes')
-    console.log('archiver has been finalized and the output file descriptor has closed.')
+    console.log(`Total .zip file size: ${Math.round(archive.pointer() / 1024)}KB`)
+    console.log('archiver has been finalized and the output file instance has closed.')
   })
 
   archive.on('error', (err) => { throw err })
