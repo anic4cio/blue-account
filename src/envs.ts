@@ -1,15 +1,15 @@
 interface IEnvs {
   username: string
   password: string
-  loginUrl: string
-  serviceUrl: string
+  slackToken: string
+  cloudFunctionToken: string
 }
 
 const envs: IEnvs = {
   username: process.env.BLUE_USER!,
   password: process.env.BLUE_PASS!,
-  loginUrl: process.env.URL_LOGIN!,
-  serviceUrl: process.env.URL_SERVICE!
+  slackToken: process.env.SLACK_TOKEN!,
+  cloudFunctionToken: process.env.CLOUD_FUNCTION_TOKEN!
 }
 
 export default envs
