@@ -1,5 +1,5 @@
 # Blue Account 💙
-Simple application to auto-download many files in a website and compress it.
+Simple application to auto-download many files in a website and compress it to send it to our corporative environment.
 
 ### Techs
 * Typescript
