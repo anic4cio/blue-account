@@ -5,7 +5,8 @@
   "main": "lib/index.js",
   "scripts": {
     "build": "tsc -m commonjs -t es2016 --esModuleInterop",
-    "start": "node -r dotenv/config ./lib/index"
+    "start": "node -r dotenv/config ./lib/index",
+    "postinstall": "node node_modules/puppeteer/install.js"
   },
   "keywords": [],
   "author": "Vinicius Anic4cio",
