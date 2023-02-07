@@ -1,18 +1,28 @@
 import puppeteer, { Browser, Page } from 'puppeteer'
+import { Request, Response } from 'firebase-functions'
+import requestValidator from './requestValidator.js'
+import { sendReportToSlack } from './reportSender.js'
+import folderCompresser from './dirCompresser.js'
+import auth from './auth.js'
 import envs from './envs.js'
 import fs from 'fs'
-import folderCompresser from './dirCompresser.js'
 
-const delay = async (milliseconds: number) => {
-  return new Promise<void>(resolve => {
-    setTimeout(() => resolve(), milliseconds)
-  })
+export const start = async (req: Request, res: Response) => {
+  auth(req, res)
+  requestValidator(req)
+  await browseAndDownload()
+  const file = 'invoices.zip'
+  const zipFileBuffer = fs.readFileSync(`./${file}`)
+  await sendReportToSlack(zipFileBuffer)
+  res.status(200).send('sucess')
 }
 
 const field = {
+  loginUrl: 'https://login.contaazul.com/#/',
   login: '[class="ds-input ds-form-control"]',
   email: '[type="email"]',
   password: '[type="password"]',
+  serviceUrl: 'https://app.contaazul.com/#/ca/notas-fiscais/notas-fiscais-de-servico',
   previousMonthButton: '[class="ds-button ds-button-default ds-button-lg ds-button--is-square ds-date-filter__button ds-date-filter__button--prev"]',
   pagination: '[class="ds-pagination-navigation-label"]',
   paginationButtonNextPage: '[class="ds-pagination-item ds-pagination-item-nav ds-pagination-item-nav--next"]',
@@ -39,14 +49,14 @@ const setDownloadDirectory = async (page: Page) => {
 
 const browseAndDownload = async () => {
   const { browser, page } = await setNewBrowser()
-  await page.goto(envs.loginUrl)
+  await page.goto(field.loginUrl)
   await page.waitForNetworkIdle()
   await page.waitForSelector(field.login)
   await page.type(field.email, envs.username, { delay: 50 })
   await page.type(field.password, envs.password, { delay: 50 })
   await page.keyboard.press('Enter')
   await page.waitForNavigation({ waitUntil: 'load' })
-  await page.goto(envs.serviceUrl)
+  await page.goto(field.serviceUrl)
   await page.waitForSelector(field.previousMonthButton)
   await page.click(field.previousMonthButton)
   await page.waitForSelector(field.pagination)
@@ -96,12 +106,17 @@ const downloadFiles = async (page: Page) => {
   await delay(2000)
 }
 
-const checkFiles = async (page: Page) => {
-  const { totalInvoices } = await getPagesNumber(page)
-  fs.readdir(downloadPath, (_err, files) => {
-    console.log(`Total invoices at page: ${totalInvoices}`)
-    console.log(`Total files at /download: ${files.length}`)
+const delay = async (milliseconds: number) => {
+  return new Promise<void>(resolve => {
+    setTimeout(() => resolve(), milliseconds)
   })
 }
 
-browseAndDownload()
+const checkFiles = async (page: Page) => {
+  const { totalInvoices } = await getPagesNumber(page)
+  fs.readdir(downloadPath, (_err, files) => {
+    const filesLength = files.length
+    console.log(`Total invoices at page: ${totalInvoices}`)
+    console.log(`Total files at /download: ${filesLength}`)
+  })
+}
