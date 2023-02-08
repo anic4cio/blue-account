@@ -15,10 +15,11 @@ jobs:
         run: npm ci
       - name: Transpile files to TS
         run: npm run build
-      - name: Auth
-        uses: google-github-actions/auth@v0
+      - id: 'auth'
+        name: 'Authenticate to Google Cloud'
+        uses: 'google-github-actions/auth@v1'
         with:
-          credentials_json: ${{ secrets.GOOGLE_CLOUD_KEY }}
+          credentials_json: '${{ secrets.GOOGLE_CREDENTIALS }}'
       - name: Deploy
         uses: 'google-github-actions/deploy-cloud-functions@v0'
         with:
