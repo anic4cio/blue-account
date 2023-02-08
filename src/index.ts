@@ -13,26 +13,18 @@ import path from 'path'
 export const start = async (req: Request, res: Response) => {
   auth(req, res)
   requestValidator(req)
-  try {
-    await browseAndDownload()
-  } catch (error) {
-    console.log('An error occurred on browseAndDownload() function')
-    console.log(error)
-  }
+  await browseAndDownload()
+
   try {
     const file = 'invoices.zip'
     const filepath = path.join(os.tmpdir(), file)
     const zipFileBuffer = await readFile(filepath)
-    try {      
-      await sendReportToSlack(zipFileBuffer)
-    } catch (error) {
-      console.log(error)
-      console.log('Error on sending report to Slack')
-    }
+    await sendReportToSlack(zipFileBuffer)
   } catch (error) {
     console.log(error)
     console.log('An error occurred getting zipfile to make buffer.')
   }
+
   res.status(200).send('sucess')
 }
 
@@ -129,6 +121,10 @@ const checkFiles = async (page: Page) => {
     console.log(`Total invoices at page: ${totalInvoices}`)
     console.log(`Total files at /invoices: ${files.length}`)
   })
+  // fs.readdir(rootPath, (_err, files) => {
+  //   console.log(`Total files at .//: ${files.length}`)
+  //   files.forEach(file => console.log(files))
+  // })
 }
 
 const getPagesNumber = async (page: Page) => {
@@ -139,3 +135,8 @@ const getPagesNumber = async (page: Page) => {
   const roundedPageNumber = roundPageNumber(totalInvoices)
   return { totalInvoices, roundedPageNumber }
 }
+
+// checked versions
+// [11, 10] 
+// version that worked
+// --> blue-account-path.zip <--
