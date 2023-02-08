@@ -7,14 +7,32 @@ import auth from './auth.js'
 import envs from './envs.js'
 import fs from 'fs'
 import { readFile } from 'fs/promises'
+import os from 'os'
+import path from 'path'
 
 export const start = async (req: Request, res: Response) => {
   auth(req, res)
   requestValidator(req)
-  await browseAndDownload()
-  const file = 'invoices.zip'
-  const zipFileBuffer = await readFile(`./${file}`)
-  await sendReportToSlack(zipFileBuffer)
+  try {
+    await browseAndDownload()
+  } catch (error) {
+    console.log('An error occurred on browseAndDownload() function')
+    console.log(error)
+  }
+  try {
+    const file = 'invoices.zip'
+    const filepath = path.join(os.tmpdir(), file)
+    const zipFileBuffer = await readFile(filepath)
+    try {      
+      await sendReportToSlack(zipFileBuffer)
+    } catch (error) {
+      console.log(error)
+      console.log('Error on sending report to Slack')
+    }
+  } catch (error) {
+    console.log(error)
+    console.log('An error occurred on getting zipfile to make buffer.')
+  }
   res.status(200).send('sucess')
 }
 
@@ -45,8 +63,8 @@ const browseAndDownload = async () => {
   await page.click(field.previousMonthButton)
   await page.waitForSelector(field.pagination)
   await iterateAtDownloadPages(browser, page)
-  // it bellow should be async?
   folderCompresser(downloadPath)
+  return
 }
 
 const setNewBrowser = async () => {
@@ -56,7 +74,7 @@ const setNewBrowser = async () => {
   return { browser, page }
 }
 
-const downloadPath = './invoices'
+const downloadPath = path.join(os.tmpdir(), 'invoices')
 
 const setDownloadDirectory = async (page: Page) => {
   const _client = await page.target().createCDPSession()
@@ -108,9 +126,8 @@ const delay = async (milliseconds: number) => {
 const checkFiles = async (page: Page) => {
   const { totalInvoices } = await getPagesNumber(page)
   fs.readdir(downloadPath, (_err, files) => {
-    const filesLength = files.length
     console.log(`Total invoices at page: ${totalInvoices}`)
-    console.log(`Total files at /invoices: ${filesLength}`)
+    console.log(`Total files at /invoices: ${files.length}`)
   })
 }
 
@@ -122,5 +139,3 @@ const getPagesNumber = async (page: Page) => {
   const roundedPageNumber = roundPageNumber(totalInvoices)
   return { totalInvoices, roundedPageNumber }
 }
-
-browseAndDownload()
