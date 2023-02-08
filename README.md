@@ -19,6 +19,6 @@ Simple application to auto-download many files in a website and compress it to s
 
 ### How to run this?
 1. Clone this repository
-2. Run `npm i`
+2. Run `npm ci`
 3. Run `npm run build` to transpile codes to typescript
 4. Run `npm run start` to starts the application
