@@ -13,8 +13,9 @@ import path from 'path'
 export const start = async (req: Request, res: Response) => {
   auth(req, res)
   requestValidator(req)
+  console.log(req.body)
   await browseAndDownload()
-
+  await browseAndDownload()
   try {
     const file = 'invoices.zip'
     const filepath = path.join(os.tmpdir(), file)
