@@ -31,7 +31,7 @@ export const start = async (req: Request, res: Response) => {
     }
   } catch (error) {
     console.log(error)
-    console.log('An error occurred on getting zipfile to make buffer.')
+    console.log('An error occurred getting zipfile to make buffer.')
   }
   res.status(200).send('sucess')
 }
