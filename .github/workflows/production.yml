@@ -11,20 +11,15 @@ jobs:
     steps:
       - name: Checkout
         uses: actions/checkout@v3
-      - name: Set Node.js 16.x
-        uses: actions/setup-node@v3
-        with:
-          node-version: 16.x
-          cache: npm
       - name: Install dependencies
         run: npm ci
       - name: Transpile files to TS
         run: npm run build
-      - id: 'auth'
-        uses: google-github-actions/auth@v1
+      - name: Auth
+        uses: google-github-actions/auth@v0
         with:
           credentials_json: ${{ secrets.GOOGLE_CLOUD_KEY }}
-      - id: 'deploy'
+      - name: Deploy
         uses: 'google-github-actions/deploy-cloud-functions@v0'
         with:
           name: 'blue-account'
