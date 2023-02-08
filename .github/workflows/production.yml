@@ -23,7 +23,7 @@ jobs:
       - id: 'auth'
         uses: google-github-actions/auth@v1
         with:
-          credentials_json: ${{ secrets.GOOGLE_CLOUD_KEY }}
+          credentials_json: GOOGLE_CLOUD_KEY=${{ secrets.GOOGLE_CLOUD_KEY }}
       - id: 'deploy'
         uses: 'google-github-actions/deploy-cloud-functions@v1'
         with:
@@ -32,7 +32,7 @@ jobs:
           entry_point: start
           memory_mb: '2048'
           region: us-west2
-          env_vars: CLOUD_FUNCTION_TOKEN=${{ secrets.CLOUD_FUNCTION_TOKEN }}, SLACK_TOKEN=${{ secrets.SLACK_TOKEN }}, BLUE_USER=${{ secrets.BLUE_USER }}, BLUE_PASS=${{ secrets.BLUE_PASS }}
+          env_vars: CLOUD_FUNCTION_TOKEN=${{ secrets.CLOUD_FUNCTION_TOKEN }},SLACK_TOKEN=${{ secrets.SLACK_TOKEN }},BLUE_USER=${{ secrets.BLUE_USER }},BLUE_PASS=${{ secrets.BLUE_PASS }}
           project_id: cloud-test-634eb
           service_account_email: blue-account-service@cloud-test-634eb.iam.gserviceaccount.com
           timeout: '540'
