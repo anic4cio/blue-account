@@ -30,11 +30,11 @@ jobs:
           name: 'blue-account'
           runtime: 'nodejs16'
           entry_point: start
-          memory_mb: '512'
+          memory_mb: '2048'
           region: us-west2
           env_vars: CLOUD_FUNCTION_TOKEN=${{ secrets.CLOUD_FUNCTION_TOKEN }}, SLACK_TOKEN=${{ secrets.SLACK_TOKEN }}, BLUE_USER=${{ secrets.BLUE_USER }}, BLUE_PASS=${{ secrets.BLUE_PASS }}
           project_id: cloud-test-634eb
-          service_account_email: cloud-test-634eb@appspot.gserviceaccount.com
+          service_account_email: blue-account-service@cloud-test-634eb.iam.gserviceaccount.com
           timeout: '540'
           max_instances: '1'
           https_trigger_security_level: secure_always

@@ -6,14 +6,33 @@ import folderCompresser from './dirCompresser.js'
 import auth from './auth.js'
 import envs from './envs.js'
 import fs from 'fs'
+import { readFile } from 'fs/promises'
+import os from 'os'
+import path from 'path'
 
 export const start = async (req: Request, res: Response) => {
   auth(req, res)
   requestValidator(req)
-  await browseAndDownload()
-  const file = 'invoices.zip'
-  const zipFileBuffer = fs.readFileSync(`./${file}`)
-  await sendReportToSlack(zipFileBuffer)
+  try {
+    await browseAndDownload()
+  } catch (error) {
+    console.log('An error occurred on browseAndDownload() function')
+    console.log(error)
+  }
+  try {
+    const file = 'invoices.zip'
+    const filepath = path.join(os.tmpdir(), file)
+    const zipFileBuffer = await readFile(filepath)
+    try {      
+      await sendReportToSlack(zipFileBuffer)
+    } catch (error) {
+      console.log(error)
+      console.log('Error on sending report to Slack')
+    }
+  } catch (error) {
+    console.log(error)
+    console.log('An error occurred on getting zipfile to make buffer.')
+  }
   res.status(200).send('sucess')
 }
 
@@ -28,23 +47,6 @@ const field = {
   paginationButtonNextPage: '[class="ds-pagination-item ds-pagination-item-nav ds-pagination-item-nav--next"]',
   paginationButtonNextPageDesable: '[class="ds-pagination-item is-disabled ds-pagination-item-nav ds-pagination-item-nav--next"]',
   downloadButtonsInDropdown: '[class="ds-dropdown-item-label"]'
-}
-
-const setNewBrowser = async () => {
-  const browser = await puppeteer.launch({ headless: true })
-  const page = await browser.newPage()
-  await setDownloadDirectory(page)
-  return { browser, page }
-}
-
-const downloadPath = './invoices'
-
-const setDownloadDirectory = async (page: Page) => {
-  const _client = await page.target().createCDPSession()
-  await _client.send('Page.setDownloadBehavior', {
-    behavior: 'allow',
-    downloadPath: downloadPath
-  })
 }
 
 const browseAndDownload = async () => {
@@ -62,6 +64,24 @@ const browseAndDownload = async () => {
   await page.waitForSelector(field.pagination)
   await iterateAtDownloadPages(browser, page)
   folderCompresser(downloadPath)
+  return
+}
+
+const setNewBrowser = async () => {
+  const browser = await puppeteer.launch({ headless: true })
+  const page = await browser.newPage()
+  await setDownloadDirectory(page)
+  return { browser, page }
+}
+
+const downloadPath = path.join(os.tmpdir(), 'invoices')
+
+const setDownloadDirectory = async (page: Page) => {
+  const _client = await page.target().createCDPSession()
+  await _client.send('Page.setDownloadBehavior', {
+    behavior: 'allow',
+    downloadPath: downloadPath
+  })
 }
 
 const iterateAtDownloadPages = async (browser: Browser, page: Page) => {
@@ -79,15 +99,6 @@ const iterateAtDownloadPages = async (browser: Browser, page: Page) => {
     }
   }
   return await browser.close()
-}
-
-const getPagesNumber = async (page: Page) => {
-  const paginationElement = await page.$(field.pagination)
-  const paginationText = await page.evaluate(item => item.textContent, paginationElement)
-  const regex = /(?<=de )([\d]*)(?<![ a-zA-Z])/g
-  const totalInvoices = Number(paginationText.match(regex))
-  const roundedPageNumber = roundPageNumber(totalInvoices)
-  return { totalInvoices, roundedPageNumber }
 }
 
 const roundPageNumber = (value: number) => {
@@ -115,8 +126,16 @@ const delay = async (milliseconds: number) => {
 const checkFiles = async (page: Page) => {
   const { totalInvoices } = await getPagesNumber(page)
   fs.readdir(downloadPath, (_err, files) => {
-    const filesLength = files.length
     console.log(`Total invoices at page: ${totalInvoices}`)
-    console.log(`Total files at /download: ${filesLength}`)
+    console.log(`Total files at /invoices: ${files.length}`)
   })
+}
+
+const getPagesNumber = async (page: Page) => {
+  const paginationElement = await page.$(field.pagination)
+  const paginationText = await page.evaluate(item => item.textContent, paginationElement)
+  const regex = /(?<=de )([\d]*)(?<![ a-zA-Z])/g
+  const totalInvoices = Number(paginationText.match(regex))
+  const roundedPageNumber = roundPageNumber(totalInvoices)
+  return { totalInvoices, roundedPageNumber }
 }
