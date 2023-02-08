@@ -6,13 +6,14 @@ import folderCompresser from './dirCompresser.js'
 import auth from './auth.js'
 import envs from './envs.js'
 import fs from 'fs'
+import { readFile } from 'fs/promises'
 
 export const start = async (req: Request, res: Response) => {
   auth(req, res)
   requestValidator(req)
   await browseAndDownload()
   const file = 'invoices.zip'
-  const zipFileBuffer = fs.readFileSync(`./${file}`)
+  const zipFileBuffer = await readFile(`./${file}`)
   await sendReportToSlack(zipFileBuffer)
   res.status(200).send('sucess')
 }
@@ -28,6 +29,24 @@ const field = {
   paginationButtonNextPage: '[class="ds-pagination-item ds-pagination-item-nav ds-pagination-item-nav--next"]',
   paginationButtonNextPageDesable: '[class="ds-pagination-item is-disabled ds-pagination-item-nav ds-pagination-item-nav--next"]',
   downloadButtonsInDropdown: '[class="ds-dropdown-item-label"]'
+}
+
+const browseAndDownload = async () => {
+  const { browser, page } = await setNewBrowser()
+  await page.goto(field.loginUrl)
+  await page.waitForNetworkIdle()
+  await page.waitForSelector(field.login)
+  await page.type(field.email, envs.username, { delay: 50 })
+  await page.type(field.password, envs.password, { delay: 50 })
+  await page.keyboard.press('Enter')
+  await page.waitForNavigation({ waitUntil: 'load' })
+  await page.goto(field.serviceUrl)
+  await page.waitForSelector(field.previousMonthButton)
+  await page.click(field.previousMonthButton)
+  await page.waitForSelector(field.pagination)
+  await iterateAtDownloadPages(browser, page)
+  // it bellow should be async?
+  folderCompresser(downloadPath)
 }
 
 const setNewBrowser = async () => {
@@ -47,23 +66,6 @@ const setDownloadDirectory = async (page: Page) => {
   })
 }
 
-const browseAndDownload = async () => {
-  const { browser, page } = await setNewBrowser()
-  await page.goto(field.loginUrl)
-  await page.waitForNetworkIdle()
-  await page.waitForSelector(field.login)
-  await page.type(field.email, envs.username, { delay: 50 })
-  await page.type(field.password, envs.password, { delay: 50 })
-  await page.keyboard.press('Enter')
-  await page.waitForNavigation({ waitUntil: 'load' })
-  await page.goto(field.serviceUrl)
-  await page.waitForSelector(field.previousMonthButton)
-  await page.click(field.previousMonthButton)
-  await page.waitForSelector(field.pagination)
-  await iterateAtDownloadPages(browser, page)
-  folderCompresser(downloadPath)
-}
-
 const iterateAtDownloadPages = async (browser: Browser, page: Page) => {
   const { roundedPageNumber } = await getPagesNumber(page)
   for (let i = 0; i < roundedPageNumber; i++) {
@@ -79,15 +81,6 @@ const iterateAtDownloadPages = async (browser: Browser, page: Page) => {
     }
   }
   return await browser.close()
-}
-
-const getPagesNumber = async (page: Page) => {
-  const paginationElement = await page.$(field.pagination)
-  const paginationText = await page.evaluate(item => item.textContent, paginationElement)
-  const regex = /(?<=de )([\d]*)(?<![ a-zA-Z])/g
-  const totalInvoices = Number(paginationText.match(regex))
-  const roundedPageNumber = roundPageNumber(totalInvoices)
-  return { totalInvoices, roundedPageNumber }
 }
 
 const roundPageNumber = (value: number) => {
@@ -117,6 +110,17 @@ const checkFiles = async (page: Page) => {
   fs.readdir(downloadPath, (_err, files) => {
     const filesLength = files.length
     console.log(`Total invoices at page: ${totalInvoices}`)
-    console.log(`Total files at /download: ${filesLength}`)
+    console.log(`Total files at /invoices: ${filesLength}`)
   })
 }
+
+const getPagesNumber = async (page: Page) => {
+  const paginationElement = await page.$(field.pagination)
+  const paginationText = await page.evaluate(item => item.textContent, paginationElement)
+  const regex = /(?<=de )([\d]*)(?<![ a-zA-Z])/g
+  const totalInvoices = Number(paginationText.match(regex))
+  const roundedPageNumber = roundPageNumber(totalInvoices)
+  return { totalInvoices, roundedPageNumber }
+}
+
+browseAndDownload()
