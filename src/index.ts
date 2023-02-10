@@ -13,20 +13,18 @@ import path from 'path'
 export const start = async (req: Request, res: Response) => {
   auth(req, res)
   requestValidator(req)
-  console.log(req.body)
-  await browseAndDownload()
   await browseAndDownload()
   try {
     const file = 'invoices.zip'
     const filepath = path.join(os.tmpdir(), file)
-    const zipFileBuffer = await readFile(filepath)
-    await sendReportToSlack(zipFileBuffer)
+    const zipBuffer = await readFile(filepath)
+    await sendReportToSlack(zipBuffer)
   } catch (error) {
     console.log(error)
-    console.log('An error occurred getting zipfile to make buffer.')
+    console.log('ERROR ON TURNING FILE TO BUFFER.')
   }
 
-  res.status(200).send('sucess')
+  return res.status(200).send('sucess')
 }
 
 const field = {
@@ -56,7 +54,7 @@ const browseAndDownload = async () => {
   await page.click(field.previousMonthButton)
   await page.waitForSelector(field.pagination)
   await iterateAtDownloadPages(browser, page)
-  folderCompresser(downloadPath)
+  await folderCompresser(downloadPath)
   return
 }
 
@@ -82,9 +80,9 @@ const iterateAtDownloadPages = async (browser: Browser, page: Page) => {
   for (let i = 0; i < roundedPageNumber; i++) {
     if (await page.$(field.paginationButtonNextPageDesable)) {
       await downloadFiles(page)
-      await delay(3500)
+      await delay(5000)
       await downloadFiles(page)
-      await delay(3500)
+      await delay(5000)
       await checkFiles(page)
     } else {
       await downloadFiles(page)
@@ -122,10 +120,6 @@ const checkFiles = async (page: Page) => {
     console.log(`Total invoices at page: ${totalInvoices}`)
     console.log(`Total files at /invoices: ${files.length}`)
   })
-  // fs.readdir(rootPath, (_err, files) => {
-  //   console.log(`Total files at .//: ${files.length}`)
-  //   files.forEach(file => console.log(files))
-  // })
 }
 
 const getPagesNumber = async (page: Page) => {
@@ -136,8 +130,3 @@ const getPagesNumber = async (page: Page) => {
   const roundedPageNumber = roundPageNumber(totalInvoices)
   return { totalInvoices, roundedPageNumber }
 }
-
-// checked versions
-// [11, 10] 
-// version that worked
-// --> blue-account-path.zip <--
