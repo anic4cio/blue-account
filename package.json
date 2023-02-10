@@ -4,7 +4,7 @@
   "description": "Simple application to auto-download many files and compress it.",
   "main": "lib/index.js",
   "scripts": {
-    "build": "tsc -m commonjs -t es2016 --esModuleInterop",
+    "build": "tsc -m commonjs -t es2021 --esModuleInterop",
     "start": "node -r dotenv/config ./lib/index",
     "postinstall": "node node_modules/puppeteer/install.js"
   },
