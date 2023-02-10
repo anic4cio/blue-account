@@ -1,7 +1,7 @@
 import archiver from 'archiver'
 import { createWriteStream } from 'fs'
 
-export default (path: string) => {
+export default async (path: string) => {
   const output = createWriteStream(`${path}.zip`)
   const archive = archiver('zip', { zlib: { level: 9 } })
 
