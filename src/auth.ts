@@ -1,19 +1,30 @@
 import envs from './envs'
-import { Request, Response } from 'firebase-functions'
+import { Request } from 'firebase-functions'
 
 type tokenType = string | string[] | undefined
 
-export default (req: Request, res: Response) => {
+interface IAuthResponse {
+  status: number
+  success: boolean
+  message: string
+}
+
+export default (req: Request) => {
+  const response: IAuthResponse = {
+    status: 200,
+    success: true,
+    message: 'success'
+  }
+
   const authenticate = () => {
     const tokenReceived = req.headers?.['x-access-token']
     if (tokenReceived) {
       const ownToken = getOwnToken()
       return compareReceivedToken(tokenReceived, ownToken)
     } else {
-      return res.status(401).json({
-        success: false,
-        message: 'No token provided.',
-      })
+      response['status'] = 401
+      response['success'] = false
+      response['message'] = 'No token provided'
     }
   }
 
@@ -24,12 +35,12 @@ export default (req: Request, res: Response) => {
 
   const compareReceivedToken = (tokenReceived: tokenType, ownToken: string) => {
     if (typeof tokenReceived !== 'string' || tokenReceived !== ownToken) {
-      return res.status(403).json({
-        success: false,
-        message: 'Failed to authenticate token.',
-      })
+      response['status'] = 403
+      response['success'] = false
+      response['message'] = 'Failed to authenticate token'
     } else return
   }
 
   authenticate()
+  return response
 }
