@@ -10,21 +10,35 @@ import { readFile } from 'fs/promises'
 import os from 'os'
 import path from 'path'
 
-export const start = async (req: Request, res: Response) => {
-  auth(req, res)
-  requestValidator(req)
-  await browseAndDownload()
-  try {
-    const file = 'invoices.zip'
-    const filepath = path.join(os.tmpdir(), file)
-    const zipBuffer = await readFile(filepath)
-    await sendReportToSlack(zipBuffer)
-  } catch (error) {
-    console.log(error)
-    console.log('ERROR ON TURNING FILE TO BUFFER.')
-  }
+// export const start = async (req: Request, res: Response) => {
+//   const authentication = auth(req)
+//   if(!authentication.success)
+//     res.status(authentication.status).send(authentication.message)
+//   const validation = requestValidator(req)
+//   if (!validation.success) 
+//     res.status(validation.code).json(validation)
+//   await browseAndDownload()
+//   try {
+//     const file = 'invoices.zip'
+//     const filepath = path.join(os.tmpdir(), file)
+//     await delay(1000)
+//     const zipBuffer = await readFile(filepath)
+//     await sendReportToSlack(zipBuffer)
+//   } catch (error) {
+//     console.log('ERROR ON TURNING FILE TO BUFFER.')
+//     return res.status(500).send('function failed')
+//   }
 
-  return res.status(200).send('sucess')
+//   return res.status(200).send('sucess')
+// }
+
+const start = async () => {
+  await browseAndDownload()
+  const file = 'invoices.zip'
+  const filepath = path.join(os.tmpdir(), file)
+  await delay(1000)
+  const zipBuffer = await readFile(filepath)
+  await sendReportToSlack(zipBuffer)
 }
 
 const field = {
@@ -42,14 +56,14 @@ const field = {
 
 const browseAndDownload = async () => {
   const { browser, page } = await setNewBrowser()
-  await page.goto(field.loginUrl)
+  await page.goto(field.loginUrl, { waitUntil: 'load' })
   await page.waitForNetworkIdle()
   await page.waitForSelector(field.login)
   await page.type(field.email, envs.username, { delay: 50 })
   await page.type(field.password, envs.password, { delay: 50 })
   await page.keyboard.press('Enter')
   await page.waitForNavigation({ waitUntil: 'load' })
-  await page.goto(field.serviceUrl)
+  await page.goto(field.serviceUrl, { waitUntil: 'load' })
   await page.waitForSelector(field.previousMonthButton)
   await page.click(field.previousMonthButton)
   await page.waitForSelector(field.pagination)
@@ -59,7 +73,7 @@ const browseAndDownload = async () => {
 }
 
 const setNewBrowser = async () => {
-  const browser = await puppeteer.launch({ headless: true })
+  const browser = await puppeteer.launch({ headless: false })
   const page = await browser.newPage()
   await setDownloadDirectory(page)
   return { browser, page }
@@ -80,9 +94,9 @@ const iterateAtDownloadPages = async (browser: Browser, page: Page) => {
   for (let i = 0; i < roundedPageNumber; i++) {
     if (await page.$(field.paginationButtonNextPageDesable)) {
       await downloadFiles(page)
-      await delay(5000)
+      await delay(4000)
       await downloadFiles(page)
-      await delay(5000)
+      await delay(4000)
       await checkFiles(page)
     } else {
       await downloadFiles(page)
@@ -105,7 +119,7 @@ const downloadFiles = async (page: Page) => {
       if (button.textContent === buttonText) button.click()
     })
   })
-  await delay(2000)
+  await delay(1000)
 }
 
 const delay = async (milliseconds: number) => {
@@ -130,3 +144,5 @@ const getPagesNumber = async (page: Page) => {
   const roundedPageNumber = roundPageNumber(totalInvoices)
   return { totalInvoices, roundedPageNumber }
 }
+
+start()
