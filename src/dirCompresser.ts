@@ -1,5 +1,7 @@
 import archiver from 'archiver'
 import { createWriteStream } from 'fs'
+import os from 'os'
+import path from 'path'
 
 const delay = async (milliseconds: number) => {
   return new Promise<void>(resolve => {
@@ -7,8 +9,10 @@ const delay = async (milliseconds: number) => {
   })
 }
 
+const streamPath = path.join(os.tmpdir(), 'invoices.zip')
+
 export default async (path: string) => {
-  const output = createWriteStream('invoices.zip')
+  const output = createWriteStream(streamPath)
   const archive = archiver('zip', { zlib: { level: 9 } })
 
   output.on('close', () => {
