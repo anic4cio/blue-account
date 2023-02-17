@@ -3,42 +3,33 @@ import { Request, Response } from 'firebase-functions'
 import requestValidator from './requestValidator.js'
 import { sendReportToSlack } from './reportSender.js'
 import folderCompresser from './dirCompresser.js'
+import { readFile } from 'fs/promises'
 import auth from './auth.js'
 import envs from './envs.js'
 import fs from 'fs'
-import { readFile } from 'fs/promises'
 import os from 'os'
 import path from 'path'
 
-// export const start = async (req: Request, res: Response) => {
-//   const authentication = auth(req)
-//   if(!authentication.success)
-//     res.status(authentication.status).send(authentication.message)
-//   const validation = requestValidator(req)
-//   if (!validation.success) 
-//     res.status(validation.code).json(validation)
-//   await browseAndDownload()
-//   try {
-//     const file = 'invoices.zip'
-//     const filepath = path.join(os.tmpdir(), file)
-//     await delay(1000)
-//     const zipBuffer = await readFile(filepath)
-//     await sendReportToSlack(zipBuffer)
-//   } catch (error) {
-//     console.log('ERROR ON TURNING FILE TO BUFFER.')
-//     return res.status(500).send('function failed')
-//   }
-
-//   return res.status(200).send('sucess')
-// }
-
-const start = async () => {
+export const start = async (req: Request, res: Response) => {
+  const authentication = auth(req)
+  if(!authentication.success)
+    res.status(authentication.status).json(authentication)
+  const validation = requestValidator(req)
+  if (!validation.success) 
+    res.status(validation.code).json(validation)
   await browseAndDownload()
   const file = 'invoices.zip'
-  const filepath = path.join(os.tmpdir(), file)
-  await delay(1000)
-  const zipBuffer = await readFile(filepath)
-  await sendReportToSlack(zipBuffer)
+  try {
+    const filepath = path.join(os.tmpdir(), file)
+    await delay(1000)
+    const zipBuffer = await readFile(filepath)
+    await sendReportToSlack(zipBuffer)
+  } catch (error) {
+    console.log('Error on START()')
+    console.log(error)
+    return res.status(500).send('function failed')
+  }
+  return res.status(200).send('sucess')
 }
 
 const field = {
@@ -54,18 +45,25 @@ const field = {
   downloadButtonsInDropdown: '[class="ds-dropdown-item-label"]'
 }
 
+const delay = async (milliseconds: number) => {
+  return new Promise<void>(resolve => {
+    setTimeout(() => resolve(), milliseconds)
+  })
+}
+
 const browseAndDownload = async () => {
   const { browser, page } = await setNewBrowser()
-  await page.goto(field.loginUrl, { waitUntil: 'load' })
+  await page.goto(field.loginUrl)
   await page.waitForNetworkIdle()
   await page.waitForSelector(field.login)
   await page.type(field.email, envs.username, { delay: 50 })
   await page.type(field.password, envs.password, { delay: 50 })
   await page.keyboard.press('Enter')
   await page.waitForNavigation({ waitUntil: 'load' })
-  await page.goto(field.serviceUrl, { waitUntil: 'load' })
+  await page.goto(field.serviceUrl)
   await page.waitForSelector(field.previousMonthButton)
   await page.click(field.previousMonthButton)
+  await delay(1500)
   await page.waitForSelector(field.pagination)
   await iterateAtDownloadPages(browser, page)
   await folderCompresser(downloadPath)
@@ -73,7 +71,7 @@ const browseAndDownload = async () => {
 }
 
 const setNewBrowser = async () => {
-  const browser = await puppeteer.launch({ headless: false })
+  const browser = await puppeteer.launch({ headless: true })
   const page = await browser.newPage()
   await setDownloadDirectory(page)
   return { browser, page }
@@ -106,6 +104,15 @@ const iterateAtDownloadPages = async (browser: Browser, page: Page) => {
   return await browser.close()
 }
 
+const getPagesNumber = async (page: Page) => {
+  const paginationElement = await page.$(field.pagination)
+  const paginationText = await page.evaluate(item => item.textContent, paginationElement)
+  const regex = /(?<=de )([\d]*)(?<![ a-zA-Z])/g
+  const totalInvoices = Number(paginationText.match(regex))
+  const roundedPageNumber = roundPageNumber(totalInvoices)
+  return { totalInvoices, roundedPageNumber }
+}
+
 const roundPageNumber = (value: number) => {
   if (value % 10 === 0) return value / 10
   return Math.ceil((value / 10))
@@ -119,13 +126,7 @@ const downloadFiles = async (page: Page) => {
       if (button.textContent === buttonText) button.click()
     })
   })
-  await delay(1000)
-}
-
-const delay = async (milliseconds: number) => {
-  return new Promise<void>(resolve => {
-    setTimeout(() => resolve(), milliseconds)
-  })
+  await delay(2500)
 }
 
 const checkFiles = async (page: Page) => {
@@ -136,13 +137,17 @@ const checkFiles = async (page: Page) => {
   })
 }
 
-const getPagesNumber = async (page: Page) => {
-  const paginationElement = await page.$(field.pagination)
-  const paginationText = await page.evaluate(item => item.textContent, paginationElement)
-  const regex = /(?<=de )([\d]*)(?<![ a-zA-Z])/g
-  const totalInvoices = Number(paginationText.match(regex))
-  const roundedPageNumber = roundPageNumber(totalInvoices)
-  return { totalInvoices, roundedPageNumber }
-}
-
-start()
+// const start = async () => {
+//   await browseAndDownload()
+//   const file = 'invoices.zip'
+//   try {
+//     const filepath = path.join(__dirname, file)
+//     await delay(1000)
+//     const zipBuffer = await readFile(filepath)
+//     await sendReportToSlack(zipBuffer)
+//   } catch (error) {
+//     console.log('Error on START()')
+//     console.log(error)
+//   }
+// }
+// start()
